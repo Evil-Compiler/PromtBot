@@ -13,7 +13,7 @@ class TextSubmission:
         """Load submissions from the file."""
         if os.path.exists(self.file_name):
             with open(self.file_name, 'r') as file:
-                self.submissions = [line.strip() for line in file]
+                self.submissions = [line.strip().split('::', 1) for line in file]
         else:
             self.submissions = []
 
@@ -21,20 +21,20 @@ class TextSubmission:
         """Save submissions to the file."""
         with open(self.file_name, 'w') as file:
             for submission in self.submissions:
-                file.write(f"{submission}\n")
+                file.write(f"{submission[0]}::{submission[1]}\n")
 
     def submit_text(self, user, text):
         """Add a new text submission and save to file."""
-        submission = f"{user}: {text}"
+        submission = (user, text)
         self.submissions.append(submission)
         self.save_submissions()
 
     def delete_text(self, user, text, admin=False):
         """Delete a text submission and save to file."""
-        submission = f"{user}: {text}"
+        submission = (user, text)
         if admin:
             # Admin deletion - remove any matching text
-            matching_submissions = [s for s in self.submissions if text in s]
+            matching_submissions = [s for s in self.submissions if text in s[1]]
             if matching_submissions:
                 for match in matching_submissions:
                     self.submissions.remove(match)
@@ -47,20 +47,20 @@ class TextSubmission:
                 self.save_submissions()
                 return True
         return False
-    
+
     def get_random_submission(self):
         """Return a random text submission from the list."""
         if self.submissions:
-            return random.choice(self.submissions)
+            return random.choice(self.submissions)[1]
         else:
             return "No submissions available."
-     
+
     def get_all_submissions(self):
-        """Return all text submissions from the list."""
+        """Return all text submissions from the list, without usernames."""
         if self.submissions:
-            return '\n'.join(self.submissions)
+            return '\n'.join(submission[1] for submission in self.submissions)
         else:
-            return "No submissions available."        
+            return "No submissions available."       
 
 def load_token(file_name='config.txt'):
     """Load the bot token from a configuration file."""
