@@ -54,6 +54,13 @@ class TextSubmission:
             return random.choice(self.submissions)
         else:
             return "No submissions available."
+     
+    def get_all_submissions(self):
+        """Return all text submissions from the list."""
+        if self.submissions:
+            return '\n'.join(self.submissions)
+        else:
+            return "No submissions available."        
 
 def load_token(file_name='config.txt'):
     """Load the bot token from a configuration file."""
@@ -166,6 +173,16 @@ async def remove_role(ctx, *, role_name: str):
     else:
         await ctx.send(f'Role "{role_name}" is not an admin role.')
 
+@bot.command(name='getsubmissions')
+async def get_submissions(ctx):
+    """Command to get all submissions, sent as a DM to the user."""
+    user = ctx.author
+    submissions = text_manager.get_all_submissions()
+    try:
+        await user.send(f'All submissions:\n{submissions}')
+        await ctx.send("The submissions have been sent to your DMs.")
+    except discord.Forbidden:
+        await ctx.send("I can't send you DMs. Please check your DM settings.")
 
 @bot.command(name='exit')
 @commands.is_owner()
