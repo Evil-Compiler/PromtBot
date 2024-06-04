@@ -2,18 +2,41 @@ import discord
 import random
 import os
 from discord.ext import commands
+from cryptography.fernet import Fernet
 
 class TextSubmission:
-    def __init__(self, file_name='submissions.txt'):
-        """Initialize the submission system with a file name."""
+    def __init__(self, file_name='submissions.txt', key_file='secret.key'):
+        """Initialize the submission system with a file name and encryption key."""
         self.file_name = file_name
+        self.key_file = key_file
+        self.load_key()
         self.load_submissions()
+
+    def load_key(self):
+        """Load or generate an encryption key."""
+        if os.path.exists(self.key_file):
+            with open(self.key_file, 'rb') as file:
+                self.key = file.read()
+        else:
+            self.key = Fernet.generate_key()
+            with open(self.key_file, 'wb') as file:
+                file.write(self.key)
+        self.cipher = Fernet(self.key)
+
+    def encrypt(self, text):
+        """Encrypt a string using Fernet."""
+        return self.cipher.encrypt(text.encode()).decode()
+
+    def decrypt(self, text):
+        """Decrypt a string using Fernet."""
+        return self.cipher.decrypt(text.encode()).decode()
 
     def load_submissions(self):
         """Load submissions from the file."""
         if os.path.exists(self.file_name):
             with open(self.file_name, 'r') as file:
                 self.submissions = [line.strip().split('::', 1) for line in file]
+                self.submissions = [(self.decrypt(user), text) for user, text in self.submissions]
         else:
             self.submissions = []
 
@@ -21,7 +44,8 @@ class TextSubmission:
         """Save submissions to the file."""
         with open(self.file_name, 'w') as file:
             for submission in self.submissions:
-                file.write(f"{submission[0]}::{submission[1]}\n")
+                encrypted_user = self.encrypt(submission[0])
+                file.write(f"{encrypted_user}::{submission[1]}\n")
 
     def submit_text(self, user, text):
         """Add a new text submission and save to file if it doesn't already exist."""
