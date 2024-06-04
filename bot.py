@@ -145,21 +145,27 @@ async def delete_submission(ctx, *, text: str):
 
 @bot.command(name='addrole')
 @commands.has_permissions(administrator=True)
-async def add_role(ctx, *, role: str):
+async def add_role(ctx, *, role_name: str):
     """Command to add a role that can delete any submission."""
-    if role_manager.add_role(role):
-        await ctx.send(f'Role "{role}" added to admin roles.')
+    guild = ctx.guild
+    role = discord.utils.get(guild.roles, name=role_name)
+    if role:
+        if role_manager.add_role(role_name):
+            await ctx.send(f'Role "{role_name}" added to admin roles.')
+        else:
+            await ctx.send(f'Role "{role_name}" is already an admin role.')
     else:
-        await ctx.send(f'Role "{role}" is already an admin role.')
+        await ctx.send(f'Role "{role_name}" does not exist on this server.')
 
 @bot.command(name='removerole')
 @commands.has_permissions(administrator=True)
-async def remove_role(ctx, *, role: str):
+async def remove_role(ctx, *, role_name: str):
     """Command to remove a role that can delete any submission."""
-    if role_manager.remove_role(role):
-        await ctx.send(f'Role "{role}" removed from admin roles.')
+    if role_manager.remove_role(role_name):
+        await ctx.send(f'Role "{role_name}" removed from admin roles.')
     else:
-        await ctx.send(f'Role "{role}" is not an admin role.')
+        await ctx.send(f'Role "{role_name}" is not an admin role.')
+
 
 @bot.command(name='exit')
 @commands.is_owner()
