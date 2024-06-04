@@ -46,6 +46,7 @@ class TextSubmission:
                 self.submissions.remove(submission)
                 self.save_submissions()
                 return True
+        return False
     
     def get_random_submission(self):
         """Return a random text submission from the list."""
@@ -63,6 +64,46 @@ def load_token(file_name='config.txt'):
                     return line.strip().split('=')[1]
     raise ValueError("Bot token not found in the config file.")
 
+class RoleManager:
+    def __init__(self, file_name='admin_roles.txt'):
+        """Initialize the role manager with a file name."""
+        self.file_name = file_name
+        self.load_roles()
+
+    def load_roles(self):
+        """Load roles from the file."""
+        if os.path.exists(self.file_name):
+            with open(self.file_name, 'r') as file:
+                self.roles = [line.strip() for line in file]
+        else:
+            self.roles = ['Admin', 'Moderator']  # Default roles
+
+    def save_roles(self):
+        """Save roles to the file."""
+        with open(self.file_name, 'w') as file:
+            for role in self.roles:
+                file.write(f"{role}\n")
+
+    def add_role(self, role):
+        """Add a new role and save to file."""
+        if role not in self.roles:
+            self.roles.append(role)
+            self.save_roles()
+            return True
+        return False
+
+    def remove_role(self, role):
+        """Remove a role and save to file."""
+        if role in self.roles:
+            self.roles.remove(role)
+            self.save_roles()
+            return True
+        return False
+
+    def is_admin(self, user_roles):
+        """Check if any of the user's roles are in the admin roles list."""
+        return any(role.name in self.roles for role in user_roles)
+
 
 # Initialize the bot with a command prefix
 intents = discord.Intents.all()
@@ -70,6 +111,7 @@ bot = commands.Bot(command_prefix='!',intents=intents)
 
 # Initialize the TextSubmission instance
 text_manager = TextSubmission()
+role_manager = RoleManager()
 
 # Define the roles that can delete any submission
 ADMIN_ROLES = ['Admin', 'Moderator']
@@ -95,11 +137,29 @@ async def random_submission(ctx):
 async def delete_submission(ctx, *, text: str):
     """Command to delete a user's submission."""
     user = f"{ctx.author.name}#{ctx.author.discriminator}"
-    is_admin = any(role.name in ADMIN_ROLES for role in ctx.author.roles)
+    is_admin = role_manager.is_admin(ctx.author.roles)
     if text_manager.delete_text(user, text, admin=is_admin):
         await ctx.send(f'Text deleted: "{text}"')
     else:
         await ctx.send(f'No matching text found or insufficient permissions: "{text}"')
+
+@bot.command(name='addrole')
+@commands.has_permissions(administrator=True)
+async def add_role(ctx, *, role: str):
+    """Command to add a role that can delete any submission."""
+    if role_manager.add_role(role):
+        await ctx.send(f'Role "{role}" added to admin roles.')
+    else:
+        await ctx.send(f'Role "{role}" is already an admin role.')
+
+@bot.command(name='removerole')
+@commands.has_permissions(administrator=True)
+async def remove_role(ctx, *, role: str):
+    """Command to remove a role that can delete any submission."""
+    if role_manager.remove_role(role):
+        await ctx.send(f'Role "{role}" removed from admin roles.')
+    else:
+        await ctx.send(f'Role "{role}" is not an admin role.')
 
 @bot.command(name='exit')
 @commands.is_owner()
