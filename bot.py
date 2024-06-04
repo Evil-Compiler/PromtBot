@@ -201,6 +201,7 @@ async def remove_role(ctx, *, role_name: str):
         await ctx.send(f'Role "{role_name}" is not an admin role.')
 
 @bot.command(name='getsubmissions')
+@commands.cooldown(rate=1, per=180, type=commands.BucketType.user)
 async def get_submissions(ctx):
     """Command to get all submissions, sent as a DM to the user."""
     user = ctx.author
@@ -210,6 +211,12 @@ async def get_submissions(ctx):
         await ctx.send("The submissions have been sent to your DMs.")
     except discord.Forbidden:
         await ctx.send("I can't send you DMs. Please check your DM settings.")
+
+@get_submissions.error
+async def get_submissions_error(ctx, error):
+    """Handle errors for the getsubmissions command."""
+    if isinstance(error, commands.CommandOnCooldown):
+        await ctx.send(f"This command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
 
 @bot.command(name='exit')
 @commands.is_owner()
