@@ -108,9 +108,9 @@ class RoleManager:
         """Load roles from the file."""
         if os.path.exists(self.file_name):
             with open(self.file_name, 'r') as file:
-                self.roles = [line.strip() for line in file]
+                self.roles = [int(line.strip()) for line in file]
         else:
-            self.roles = ['Admin', 'Moderator']  # Default roles
+            self.roles = []
 
     def save_roles(self):
         """Save roles to the file."""
@@ -118,25 +118,25 @@ class RoleManager:
             for role in self.roles:
                 file.write(f"{role}\n")
 
-    def add_role(self, role):
+    def add_role(self, role_id):
         """Add a new role and save to file."""
-        if role not in self.roles:
-            self.roles.append(role)
+        if role_id not in self.roles:
+            self.roles.append(role_id)
             self.save_roles()
             return True
         return False
 
-    def remove_role(self, role):
+    def remove_role(self, role_id):
         """Remove a role and save to file."""
-        if role in self.roles:
-            self.roles.remove(role)
+        if role_id in self.roles:
+            self.roles.remove(role_id)
             self.save_roles()
             return True
         return False
 
     def is_admin(self, user_roles):
         """Check if any of the user's roles are in the admin roles list."""
-        return any(role.name in self.roles for role in user_roles)
+        return any(role.id in self.roles for role in user_roles)
 
 class SubmissionRoleManager:
     def __init__(self, file_name='submission_roles.txt'):
@@ -148,7 +148,7 @@ class SubmissionRoleManager:
         """Load roles from the file."""
         if os.path.exists(self.file_name):
             with open(self.file_name, 'r') as file:
-                self.roles = [line.strip() for line in file]
+                self.roles = [int(line.strip()) for line in file]
         else:
             self.roles = []
 
@@ -158,25 +158,25 @@ class SubmissionRoleManager:
             for role in self.roles:
                 file.write(f"{role}\n")
 
-    def add_role(self, role):
+    def add_role(self, role_id):
         """Add a new role and save to file."""
-        if role not in self.roles:
-            self.roles.append(role)
+        if role_id not in self.roles:
+            self.roles.append(role_id)
             self.save_roles()
             return True
         return False
 
-    def remove_role(self, role):
+    def remove_role(self, role_id):
         """Remove a role and save to file."""
-        if role in self.roles:
-            self.roles.remove(role)
+        if role_id in self.roles:
+            self.roles.remove(role_id)
             self.save_roles()
             return True
         return False
 
     def can_submit(self, user_roles):
         """Check if any of the user's roles are in the submission roles list."""
-        return any(role.name in self.roles for role in user_roles)
+        return any(role.id in self.roles for role in user_roles)
 
 # Initialize the bot with a command prefix
 intents = discord.Intents.all()
@@ -222,49 +222,39 @@ async def delete_submission(ctx, *, text: str):
 
 @bot.command(name='addrole')
 @commands.has_permissions(administrator=True)
-async def add_role(ctx, *, role_name: str):
+async def add_role(ctx, *, role: discord.Role):
     """Command to add a role that can delete any submission."""
-    guild = ctx.guild
-    role = discord.utils.get(guild.roles, name=role_name)
-    if role:
-        if role_manager.add_role(role_name):
-            await ctx.send(f'Role "{role_name}" added to admin roles.')
-        else:
-            await ctx.send(f'Role "{role_name}" is already an admin role.')
+    if role_manager.add_role(role.id):
+        await ctx.send(f'Role "{role.name}" added to admin roles.')
     else:
-        await ctx.send(f'Role "{role_name}" does not exist on this server.')
+        await ctx.send(f'Role "{role.name}" is already an admin role.')
 
 @bot.command(name='removerole')
 @commands.has_permissions(administrator=True)
-async def remove_role(ctx, *, role_name: str):
+async def remove_role(ctx, *, role: discord.Role):
     """Command to remove a role that can delete any submission."""
-    if role_manager.remove_role(role_name):
-        await ctx.send(f'Role "{role_name}" removed from admin roles.')
+    if role_manager.remove_role(role.id):
+        await ctx.send(f'Role "{role.name}" removed from admin roles.')
     else:
-        await ctx.send(f'Role "{role_name}" is not an admin role.')
+        await ctx.send(f'Role "{role.name}" is not an admin role.')
 
 @bot.command(name='addsubmitrole')
 @commands.has_permissions(administrator=True)
-async def add_submit_role(ctx, *, role_name: str):
+async def add_submit_role(ctx, *, role: discord.Role):
     """Command to add a role that can submit text."""
-    guild = ctx.guild
-    role = discord.utils.get(guild.roles, name=role_name)
-    if role:
-        if submission_role_manager.add_role(role_name):
-            await ctx.send(f'Role "{role_name}" added to submission roles.')
-        else:
-            await ctx.send(f'Role "{role_name}" is already a submission role.')
+    if submission_role_manager.add_role(role.id):
+        await ctx.send(f'Role "{role.name}" added to submission roles.')
     else:
-        await ctx.send(f'Role "{role_name}" does not exist on this server.')
+        await ctx.send(f'Role "{role.name}" is already a submission role.')
 
 @bot.command(name='removesubmitrole')
 @commands.has_permissions(administrator=True)
-async def remove_submit_role(ctx, *, role_name: str):
+async def remove_submit_role(ctx, *, role: discord.Role):
     """Command to remove a role that can submit text."""
-    if submission_role_manager.remove_role(role_name):
-        await ctx.send(f'Role "{role_name}" removed from submission roles.')
+    if submission_role_manager.remove_role(role.id):
+        await ctx.send(f'Role "{role.name}" removed from submission roles.')
     else:
-        await ctx.send(f'Role "{role_name}" is not a submission role.')
+        await ctx.send(f'Role "{role.name}" is not a submission role.')
 
 @bot.command(name='getsubmissions')
 @commands.cooldown(rate=1, per=180, type=commands.BucketType.user)
@@ -292,10 +282,10 @@ async def help_command(ctx):
     `!submit <text>` - Submit a new text (requires submission role).
     `!random` - Get a random text submission.
     `!delete <text>` - Delete your text submission or any if you have the role.
-    `!addrole <role_name>` - Add a role that can delete any submission (Admin only).
-    `!removerole <role_name>` - Remove a role that can delete any submission (Admin only).
-    `!addsubmitrole <role_name>` - Add a role that can submit text (Admin only).
-    `!removesubmitrole <role_name>` - Remove a role that can submit text (Admin only).
+    `!addrole <role>` - Add a role that can delete any submission (Admin only).
+    `!removerole <role>` - Remove a role that can delete any submission (Admin only).
+    `!addsubmitrole <role>` - Add a role that can submit text (Admin only).
+    `!removesubmitrole <role>` - Remove a role that can submit text (Admin only).
     `!getsubmissions` - Get all submissions (3 minute cooldown).
     `!exit` - Exit the bot (Bot owner only).
     """
