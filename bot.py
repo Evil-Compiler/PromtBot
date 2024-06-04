@@ -218,6 +218,21 @@ async def get_submissions_error(ctx, error):
     if isinstance(error, commands.CommandOnCooldown):
         await ctx.send(f"This command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
 
+@bot.command(name='info')
+async def help_command(ctx):
+    """Custom help command to list all available commands."""
+    help_text = """
+    **Available Commands:**
+    `!submit <text>` - Submit a new text.
+    `!random` - Get a random text submission.
+    `!delete <text>` - Delete your text submission or any if you have the role.
+    `!addrole <role_name>` - Add a role that can delete any submission (Admin only).
+    `!removerole <role_name>` - Remove a role that can delete any submission (Admin only).
+    `!getsubmissions` - Get all submissions (3 minute cooldown).
+    `!exit` - Exit the bot (Bot owner only).
+    """
+    await ctx.send(help_text)
+
 @bot.command(name='exit')
 @commands.is_owner()
 async def exit_bot(ctx):
