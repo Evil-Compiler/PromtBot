@@ -120,8 +120,6 @@ bot = commands.Bot(command_prefix='!',intents=intents)
 text_manager = TextSubmission()
 role_manager = RoleManager()
 
-# Define the roles that can delete any submission
-ADMIN_ROLES = ['Admin', 'Moderator']
 
 @bot.event
 async def on_ready():
