@@ -24,10 +24,13 @@ class TextSubmission:
                 file.write(f"{submission[0]}::{submission[1]}\n")
 
     def submit_text(self, user, text):
-        """Add a new text submission and save to file."""
-        submission = (user, text)
-        self.submissions.append(submission)
-        self.save_submissions()
+        """Add a new text submission and save to file if it doesn't already exist."""
+        if text not in (submission[1] for submission in self.submissions):
+            submission = (user, text)
+            self.submissions.append(submission)
+            self.save_submissions()
+            return True
+        return False
 
     def delete_text(self, user, text, admin=False):
         """Delete a text submission and save to file."""
@@ -129,8 +132,10 @@ async def on_ready():
 async def submit(ctx, *, text: str):
     """Command to submit text."""
     user = f"{ctx.author.name}#{ctx.author.discriminator}"
-    text_manager.submit_text(user, text)
-    await ctx.send(f'Text submitted by {user}: "{text}"')
+    if text_manager.submit_text(user, text):
+        await ctx.send(f'Text submitted by {user}: "{text}"')
+    else:
+        await ctx.send(f'The text "{text}" already exists in the submissions.')
 
 @bot.command(name='random')
 async def random_submission(ctx):
