@@ -2,7 +2,8 @@
 This Discord bot allows users to submit text messages, which are stored and can be retrieved at random. Users can also delete their submissions, and administrators can delete any submission or manage roles that can perform deletion.
 
 ## Prerequisites
-Python 3 installed on your system.(Tested on `python 3.12.3`)
+Python 3 installed on your system. 
+>(Tested on `python 3.12.3`)
 
 discord.py library installed. You can install it using pip:
 `pip install discord.py`
@@ -11,16 +12,15 @@ cryptography library installed for encryption of user data. You can install it u
 `pip install cryptography`
 
 ## Installation and Setup
-Clone or download the project repository to your local machine.
+1. Clone or download the project repository to your local machine.
 
-Ensure Python and the required libraries are installed.
+2. Ensure Python and the required libraries are installed.
 
-Create a Discord bot and obtain its token. You can follow the official Discord developer documentation for detailed instructions.
+3. Create a Discord bot and obtain its token. You can follow the official Discord developer documentation for detailed instructions.
 
-Create a `config.txt` file in the project directory and add your bot token in the following format:
-`TOKEN=YOUR_DISCORD_BOT_TOKEN`
+4. Create a `config.txt` file in the project directory and add your bot token in the following format:`TOKEN=YOUR_DISCORD_BOT_TOKEN`
 
-Run the bot script using Python:
+5. Run the bot script using Python:
 `python bot.py`
 
 ## Usage
