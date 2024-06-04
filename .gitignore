@@ -1,3 +1,5 @@
-# ignore ALL .txt files
-*.txt
+# ignore these files
+*roles.txt
+config.txt
+submissions.txt
 *.key
