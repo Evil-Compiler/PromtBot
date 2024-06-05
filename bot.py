@@ -199,7 +199,7 @@ async def submit(ctx, *, text: str):
         if text_manager.submit_text(user, text):
             await ctx.send(f'Text submitted by {user}: "{text}"')
         else:
-            await ctx.send(f'The text "{text}" already exists in the submissions.')
+            await ctx.send(f'The promt {text} already exists in the submissions.')
     else:
         await ctx.send("You do not have the required role to submit text.")
 
@@ -216,36 +216,36 @@ async def delete_submission(ctx, *, text: str):
     user = f"{ctx.author.name}#{ctx.author.discriminator}"
     is_admin = role_manager.is_admin(ctx.author.roles)
     if text_manager.delete_text(user, text, admin=is_admin):
-        await ctx.send(f'Text deleted: "{text}"')
+        await ctx.send(f'Text deleted: {text}')
     else:
-        await ctx.send(f'No matching text found or insufficient permissions: "{text}"')
+        await ctx.send(f'No matching text found or insufficient permissions: {text}')
 
 @bot.command(name='addrole')
 @commands.has_permissions(administrator=True)
 async def add_role(ctx, *, role: discord.Role):
     """Command to add a role that can delete any submission."""
     if role_manager.add_role(role.id):
-        await ctx.send(f'Role "{role.name}" added to admin roles.')
+        await ctx.send(f'Role {role.name} added to admin roles.')
     else:
-        await ctx.send(f'Role "{role.name}" is already an admin role.')
+        await ctx.send(f'Role {role.name} is already an admin role.')
 
 @bot.command(name='removerole')
 @commands.has_permissions(administrator=True)
 async def remove_role(ctx, *, role: discord.Role):
     """Command to remove a role that can delete any submission."""
     if role_manager.remove_role(role.id):
-        await ctx.send(f'Role "{role.name}" removed from admin roles.')
+        await ctx.send(f'Role {role.name} removed from admin roles.')
     else:
-        await ctx.send(f'Role "{role.name}" is not an admin role.')
+        await ctx.send(f'Role {role.name} is not an admin role.')
 
 @bot.command(name='addsubmitrole')
 @commands.has_permissions(administrator=True)
 async def add_submit_role(ctx, *, role: discord.Role):
     """Command to add a role that can submit text."""
     if submission_role_manager.add_role(role.id):
-        await ctx.send(f'Role "{role.name}" added to submission roles.')
+        await ctx.send(f'Role {role.name} added to submission roles.')
     else:
-        await ctx.send(f'Role "{role.name}" is already a submission role.')
+        await ctx.send(f'Role {role.name} is already a submission role.')
 
 @bot.command(name='removesubmitrole')
 @commands.has_permissions(administrator=True)
@@ -286,7 +286,7 @@ async def help_command(ctx):
     `!removerole <role>` - Remove a role that can delete any submission (Admin only).
     `!addsubmitrole <role>` - Add a role that can submit text (Admin only).
     `!removesubmitrole <role>` - Remove a role that can submit text (Admin only).
-    `!getsubmissions` - Get all submissions (3 minute cooldown).
+    `!getsubmissions` - Get all submissions to youre DMs (3 minute cooldown).
     `!exit` - Exit the bot (Bot owner only).
     """
     await ctx.send(help_text)
