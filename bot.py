@@ -31,12 +31,20 @@ class TextSubmission:
         """Decrypt a string using Fernet."""
         return self.cipher.decrypt(text.encode()).decode()
 
+    def escape_newlines(self, text):
+        """Escape newlines in the text."""
+        return text.replace('\n', '\\n')
+
+    def unescape_newlines(self, text):
+        """Unescape newlines in the text."""
+        return text.replace('\\n', '\n')
+
     def load_submissions(self):
         """Load submissions from the file."""
         if os.path.exists(self.file_name):
             with open(self.file_name, 'r') as file:
                 self.submissions = [line.strip().split('::', 1) for line in file]
-                self.submissions = [(self.decrypt(user), text) for user, text in self.submissions]
+                self.submissions = [(self.decrypt(user), self.unescape_newlines(text)) for user, text in self.submissions]
         else:
             self.submissions = []
 
@@ -45,7 +53,8 @@ class TextSubmission:
         with open(self.file_name, 'w') as file:
             for submission in self.submissions:
                 encrypted_user = self.encrypt(submission[0])
-                file.write(f"{encrypted_user}::{submission[1]}\n")
+                escaped_text = self.escape_newlines(submission[1])
+                file.write(f"{encrypted_user}::{escaped_text}\n")
 
     def submit_text(self, user, text):
         """Add a new text submission and save to file if it doesn't already exist."""
