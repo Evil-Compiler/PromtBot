@@ -267,16 +267,19 @@ async def remove_submit_role(ctx, *, role: discord.Role):
         await ctx.send(f'Role "{role.name}" is not a submission role.')
 
 @bot.command(name='getsubmissions')
-@commands.cooldown(rate=1, per=180, type=commands.BucketType.user)
+@commands.cooldown(1, 180, commands.BucketType.user)  # 3-minute cooldown per user
 async def get_submissions(ctx):
-    """Command to get all submissions, sent as a DM to the user."""
-    user = ctx.author
+    """Command to get all submissions, with a separator between each submission."""
     submissions = text_manager.get_all_submissions()
+    file_path = 'submissions_output.txt'
+    with open(file_path, 'w') as file:
+        file.write(submissions)
     try:
-        await user.send(f'All submissions:\n{submissions}')
+        await ctx.author.send(file=discord.File(file_path))
         await ctx.send("The submissions have been sent to your DMs.")
     except discord.Forbidden:
         await ctx.send("I can't send you DMs. Please check your DM settings.")
+    os.remove(file_path)
 
 @get_submissions.error
 async def get_submissions_error(ctx, error):
@@ -285,21 +288,22 @@ async def get_submissions_error(ctx, error):
         await ctx.send(f"This command is on cooldown. Please try again in {error.retry_after:.2f} seconds.")
 
 @bot.command(name='info')
-async def help_command(ctx):
-    """Custom help command to list all available commands."""
-    help_text = """
-    **Available Commands:**
-    `!submit <text>` - Submit a new text (requires submission role).
-    `!random` - Get a random text submission.
-    `!delete <text>` - Delete your text submission or any if you have the role.
-    `!addrole <role>` - Add a role that can delete any submission (Admin only).
-    `!removerole <role>` - Remove a role that can delete any submission (Admin only).
-    `!addsubmitrole <role>` - Add a role that can submit text (Admin only).
-    `!removesubmitrole <role>` - Remove a role that can submit text (Admin only).
-    `!getsubmissions` - Get all submissions to youre DMs (3 minute cooldown).
-    `!exit` - Exit the bot (Bot owner only).
-    """
-    await ctx.send(help_text)
+async def info(ctx):
+    """Command to display information about the bot."""
+    help_message = (
+        "Commands:\n"
+        "!submit <text> - Submit text.\n"
+        "!random - Get a random submission.\n"
+        "!delete <text> - Delete your own submission. Admins can delete any submission.\n"
+        "!addrole <role> - Add a role that can delete any submission. (Admin only)\n"
+        "!removerole <role> - Remove a role that can delete any submission. (Admin only)\n"
+        "!addsubmitrole <role> - Add a role that can submit texts. (Admin only)\n"
+        "!removesubmitrole <role> - Remove a role that can submit texts. (Admin only)\n"
+        "!getsubmissions - Get all submissions in your DM. (3-minute cooldown)\n"
+        "!info - Display this help message.\n"
+        "!exit - Shut down the bot. (Bot owner only)"
+    )
+    await ctx.send(help_message)
 
 @bot.command(name='exit')
 @commands.is_owner()
