@@ -92,11 +92,12 @@ class TextSubmission:
             return "No submissions available."
 
     def get_all_submissions(self):
-        """Return all text submissions from the list, without usernames."""
+        """Return all text submissions from the list, without usernames, separated by a line."""
         if self.submissions:
-            return '\n'.join(submission[1] for submission in self.submissions)
+            separator = "\n--------------------------------------\n"
+            return separator.join(submission[1] for submission in self.submissions)
         else:
-            return "No submissions available."       
+            return "No submissions available."  
 
 def load_token(file_name='config.txt'):
     """Load the bot token from a configuration file."""
