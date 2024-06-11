@@ -43,8 +43,8 @@ class TextSubmission:
         """Load submissions from the file."""
         if os.path.exists(self.file_name):
             with open(self.file_name, 'r') as file:
-                self.submissions = [line.strip().split('::', 1) for line in file]
-                self.submissions = [(self.decrypt(user), self.unescape_newlines(text)) for user, text in self.submissions]
+                self.submissions = [line.strip().split('::', 2) for line in file]
+                self.submissions = [(self.decrypt(user), category, self.unescape_newlines(text)) for user, category, text in self.submissions]
         else:
             self.submissions = []
 
@@ -53,13 +53,13 @@ class TextSubmission:
         with open(self.file_name, 'w') as file:
             for submission in self.submissions:
                 encrypted_user = self.encrypt(submission[0])
-                escaped_text = self.escape_newlines(submission[1])
-                file.write(f"{encrypted_user}::{escaped_text}\n")
+                escaped_text = self.escape_newlines(submission[2])
+                file.write(f"{encrypted_user}::{submission[1]}::{escaped_text}\n")
 
-    def submit_text(self, user, text):
-        """Add a new text submission and save to file if it doesn't already exist."""
-        if text not in (submission[1] for submission in self.submissions):
-            submission = (user, text)
+    def submit_text(self, user, category, text):
+        """Add a new text submission with a category and save to file if it doesn't already exist."""
+        if text not in (submission[2] for submission in self.submissions):
+            submission = (user, category, text)
             self.submissions.append(submission)
             self.save_submissions()
             return True
@@ -67,35 +67,27 @@ class TextSubmission:
 
     def delete_text(self, user, text, admin=False):
         """Delete a text submission and save to file."""
-        submission = (user, text)
-        if admin:
-            # Admin deletion - remove any matching text
-            matching_submissions = [s for s in self.submissions if text in s[1]]
-            if matching_submissions:
-                for match in matching_submissions:
-                    self.submissions.remove(match)
-                self.save_submissions()
-                return True
-        else:
-            # User deletion - remove only if the user matches
-            if submission in self.submissions:
-                self.submissions.remove(submission)
-                self.save_submissions()
-                return True
+        submission = [(u, c, t) for u, c, t in self.submissions if t == text and (admin or u == user)]
+        if submission:
+            self.submissions = [s for s in self.submissions if s not in submission]
+            self.save_submissions()
+            return True
         return False
 
-    def get_random_submission(self):
-        """Return a random text submission from the list."""
-        if self.submissions:
-            return random.choice(self.submissions)[1]
+    def get_random_submission(self, category=None):
+        """Return a random text submission from the list, optionally filtered by category."""
+        submissions = [s for s in self.submissions if category is None or s[1] == category]
+        if submissions:
+            return random.choice(submissions)[2]
         else:
             return "No submissions available."
 
-    def get_all_submissions(self):
-        """Return all text submissions from the list, without usernames, separated by a line."""
-        if self.submissions:
-            separator = "\n--------------------------------------\n"
-            return separator.join(submission[1] for submission in self.submissions)
+    def get_all_submissions(self, category=None):
+        """Return all text submissions from the list, optionally filtered by category."""
+        submissions = [s for s in self.submissions if category is None or s[1] == category]
+        if submissions:
+            separator = "\n----------------------\n"
+            return separator.join(submission[2] for submission in submissions)
         else:
             return "No submissions available."  
 
@@ -202,22 +194,30 @@ async def on_ready():
     print(f'Logged in as {bot.user.name}')
 
 @bot.command(name='submit')
-async def submit(ctx, *, text: str):
-    """Command to submit text."""
+async def submit(ctx, category: str, *, text: str):
+    """Command to submit text with a category."""
+    if category.lower() not in ['safe', 'questionable', 'nsfw']:
+        await ctx.send("Invalid category! Please choose from 'safe', 'questionable', or 'nsfw'.")
+        return
+
     if submission_role_manager.can_submit(ctx.author.roles):
         user = f"{ctx.author.name}#{ctx.author.discriminator}"
-        if text_manager.submit_text(user, text):
-            await ctx.send(f'Text submitted by {user}: "{text}"')
+        if text_manager.submit_text(user, category.lower(), text):
+            await ctx.send(f'Text submitted by {user} in category {category}: "{text}"')
         else:
-            await ctx.send(f'The promt {text} already exists in the submissions.')
+            await ctx.send(f'The prompt "{text}" already exists in the submissions.')
     else:
         await ctx.send("You do not have the required role to submit text.")
 
 
 @bot.command(name='random')
-async def random_submission(ctx):
-    """Command to get a random submission."""
-    submission = text_manager.get_random_submission()
+async def random_submission(ctx, category: str = None):
+    """Command to get a random submission, optionally filtered by category."""
+    if category and category.lower() not in ['safe', 'questionable', 'nsfw']:
+        await ctx.send("Invalid category! Please choose from 'safe', 'questionable', 'nsfw', or leave it blank for all categories.")
+        return
+    
+    submission = text_manager.get_random_submission(category.lower() if category else None)
     await ctx.send(f'Random submission: "{submission}"')
 
 @bot.command(name='delete')
@@ -268,10 +268,14 @@ async def remove_submit_role(ctx, *, role: discord.Role):
 
 @bot.command(name='getsubmissions')
 @commands.cooldown(1, 180, commands.BucketType.user)  # 3-minute cooldown per user
-async def get_submissions(ctx):
-    """Command to get all submissions, with a separator between each submission."""
-    submissions = text_manager.get_all_submissions()
-    file_path = 'submissions_output.txt'
+async def get_submissions(ctx, category: str = None):
+    """Command to get all submissions, optionally filtered by category, as a downloadable .txt file."""
+    if category and category.lower() not in ['safe', 'questionable', 'nsfw']:
+        await ctx.send("Invalid category! Please choose from 'safe', 'questionable', 'nsfw', or leave it blank for all categories.")
+        return
+    
+    submissions = text_manager.get_all_submissions(category.lower() if category else None)
+    file_path = f'submissions_output_{category or "all"}.txt'
     with open(file_path, 'w') as file:
         file.write(submissions)
     try:
@@ -292,14 +296,14 @@ async def info(ctx):
     """Command to display information about the bot."""
     help_message = (
         "Commands:\n"
-        "!submit <text> - Submit text.\n"
-        "!random - Get a random submission.\n"
+        "!submit <category> <text> - Submit text in a category (safe, questionable, nsfw).\n"
+        "!random [category] - Get a random submission, optionally filtered by category.\n"
         "!delete <text> - Delete your own submission. Admins can delete any submission.\n"
         "!addrole <role> - Add a role that can delete any submission. (Admin only)\n"
         "!removerole <role> - Remove a role that can delete any submission. (Admin only)\n"
         "!addsubmitrole <role> - Add a role that can submit texts. (Admin only)\n"
         "!removesubmitrole <role> - Remove a role that can submit texts. (Admin only)\n"
-        "!getsubmissions - Get all submissions in your DM. (3-minute cooldown)\n"
+        "!getsubmissions [category] - Get all submissions in your DM, optionally filtered by category (3-minute cooldown).\n"
         "!info - Display this help message.\n"
         "!exit - Shut down the bot. (Bot owner only)"
     )
