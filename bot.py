@@ -149,16 +149,16 @@ async def get_submissions_error(ctx, error):
 async def info(ctx):
     help_message = (
         "Commands:\n"
-        "/submit <category> <text> - Submit text in a category (safe, questionable, nsfw).\n"
-        "/random [category] - Get a random submission, optionally filtered by category.\n"
-        "/delete <text> - Delete your own submission. Admins can delete any submission.\n"
-        "/addrole <role> - Add a role that can delete any submission. (Admin only)\n"
-        "/removerole <role> - Remove a role that can delete any submission. (Admin only)\n"
-        "/addsubmitrole <role> - Add a role that can submit texts. (Admin only)\n"
-        "/removesubmitrole <role> - Remove a role that can submit texts. (Admin only)\n"
-        "/getsubmissions [category] - Get all submissions in your DM, optionally filtered by category (3-minute cooldown).\n"
-        "/info - Display this help message.\n"
-        "/exit - Shut down the bot. (Bot owner only)"
+        "!submit <category> <text> - Submit text in a category (safe, questionable, nsfw).\n"
+        "!random [category] - Get a random submission, optionally filtered by category.\n"
+        "!delete <text> - Delete your own submission. Admins can delete any submission.\n"
+        "!addrole <role> - Add a role that can delete any submission. (Admin only)\n"
+        "!removerole <role> - Remove a role that can delete any submission. (Admin only)\n"
+        "!addsubmitrole <role> - Add a role that can submit texts. (Admin only)\n"
+        "!removesubmitrole <role> - Remove a role that can submit texts. (Admin only)\n"
+        "!getsubmissions [category] - Get all submissions in your DM, optionally filtered by category (3-minute cooldown).\n"
+        "!info - Display this help message.\n"
+        "!exit - Shut down the bot. (Bot owner only)"
     )
     await ctx.send(help_message)
 
