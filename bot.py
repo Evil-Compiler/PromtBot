@@ -1,95 +1,17 @@
+# bot.py
+
 import discord
-import random
 import os
 from discord.ext import commands
 from cryptography.fernet import Fernet
 
-class TextSubmission:
-    def __init__(self, file_name='submissions.txt', key_file='secret.key'):
-        """Initialize the submission system with a file name and encryption key."""
-        self.file_name = file_name
-        self.key_file = key_file
-        self.load_key()
-        self.load_submissions()
+# Import the TextSubmission class
+from text_submission import TextSubmission
 
-    def load_key(self):
-        """Load or generate an encryption key."""
-        if os.path.exists(self.key_file):
-            with open(self.key_file, 'rb') as file:
-                self.key = file.read()
-        else:
-            self.key = Fernet.generate_key()
-            with open(self.key_file, 'wb') as file:
-                file.write(self.key)
-        self.cipher = Fernet(self.key)
+# Import the TextSubmission and SubmissionRoleManager class
+from role_manager import RoleManager
+from role_manager import SubmissionRoleManager
 
-    def encrypt(self, text):
-        """Encrypt a string using Fernet."""
-        return self.cipher.encrypt(text.encode()).decode()
-
-    def decrypt(self, text):
-        """Decrypt a string using Fernet."""
-        return self.cipher.decrypt(text.encode()).decode()
-
-    def escape_newlines(self, text):
-        """Escape newlines in the text."""
-        return text.replace('\n', '\\n')
-
-    def unescape_newlines(self, text):
-        """Unescape newlines in the text."""
-        return text.replace('\\n', '\n')
-
-    def load_submissions(self):
-        """Load submissions from the file."""
-        if os.path.exists(self.file_name):
-            with open(self.file_name, 'r') as file:
-                self.submissions = [line.strip().split('::', 2) for line in file]
-                self.submissions = [(self.decrypt(user), category, self.unescape_newlines(text)) for user, category, text in self.submissions]
-        else:
-            self.submissions = []
-
-    def save_submissions(self):
-        """Save submissions to the file."""
-        with open(self.file_name, 'w') as file:
-            for submission in self.submissions:
-                encrypted_user = self.encrypt(submission[0])
-                escaped_text = self.escape_newlines(submission[2])
-                file.write(f"{encrypted_user}::{submission[1]}::{escaped_text}\n")
-
-    def submit_text(self, user, category, text):
-        """Add a new text submission with a category and save to file if it doesn't already exist."""
-        if text not in (submission[2] for submission in self.submissions):
-            submission = (user, category, text)
-            self.submissions.append(submission)
-            self.save_submissions()
-            return True
-        return False
-
-    def delete_text(self, user, text, admin=False):
-        """Delete a text submission and save to file."""
-        submission = [(u, c, t) for u, c, t in self.submissions if t == text and (admin or u == user)]
-        if submission:
-            self.submissions = [s for s in self.submissions if s not in submission]
-            self.save_submissions()
-            return True
-        return False
-
-    def get_random_submission(self, category=None):
-        """Return a random text submission from the list, optionally filtered by category."""
-        submissions = [s for s in self.submissions if category is None or s[1] == category]
-        if submissions:
-            return random.choice(submissions)[2]
-        else:
-            return "No submissions available."
-
-    def get_all_submissions(self, category=None):
-        """Return all text submissions from the list, optionally filtered by category."""
-        submissions = [s for s in self.submissions if category is None or s[1] == category]
-        if submissions:
-            separator = "\n----------------------\n"
-            return separator.join(submission[2] for submission in submissions)
-        else:
-            return "No submissions available."  
 
 def load_token(file_name='config.txt'):
     """Load the bot token from a configuration file."""
@@ -100,85 +22,9 @@ def load_token(file_name='config.txt'):
                     return line.strip().split('=')[1]
     raise ValueError("Bot token not found in the config file.")
 
-class RoleManager:
-    def __init__(self, file_name='admin_roles.txt'):
-        """Initialize the role manager with a file name."""
-        self.file_name = file_name
-        self.load_roles()
 
-    def load_roles(self):
-        """Load roles from the file."""
-        if os.path.exists(self.file_name):
-            with open(self.file_name, 'r') as file:
-                self.roles = [int(line.strip()) for line in file]
-        else:
-            self.roles = []
 
-    def save_roles(self):
-        """Save roles to the file."""
-        with open(self.file_name, 'w') as file:
-            for role in self.roles:
-                file.write(f"{role}\n")
 
-    def add_role(self, role_id):
-        """Add a new role and save to file."""
-        if role_id not in self.roles:
-            self.roles.append(role_id)
-            self.save_roles()
-            return True
-        return False
-
-    def remove_role(self, role_id):
-        """Remove a role and save to file."""
-        if role_id in self.roles:
-            self.roles.remove(role_id)
-            self.save_roles()
-            return True
-        return False
-
-    def is_admin(self, user_roles):
-        """Check if any of the user's roles are in the admin roles list."""
-        return any(role.id in self.roles for role in user_roles)
-
-class SubmissionRoleManager:
-    def __init__(self, file_name='submission_roles.txt'):
-        """Initialize the submission role manager with a file name."""
-        self.file_name = file_name
-        self.load_roles()
-
-    def load_roles(self):
-        """Load roles from the file."""
-        if os.path.exists(self.file_name):
-            with open(self.file_name, 'r') as file:
-                self.roles = [int(line.strip()) for line in file]
-        else:
-            self.roles = []
-
-    def save_roles(self):
-        """Save roles to the file."""
-        with open(self.file_name, 'w') as file:
-            for role in self.roles:
-                file.write(f"{role}\n")
-
-    def add_role(self, role_id):
-        """Add a new role and save to file."""
-        if role_id not in self.roles:
-            self.roles.append(role_id)
-            self.save_roles()
-            return True
-        return False
-
-    def remove_role(self, role_id):
-        """Remove a role and save to file."""
-        if role_id in self.roles:
-            self.roles.remove(role_id)
-            self.save_roles()
-            return True
-        return False
-
-    def can_submit(self, user_roles):
-        """Check if any of the user's roles are in the submission roles list."""
-        return any(role.id in self.roles for role in user_roles)
 
 # Initialize the bot with a command prefix
 intents = discord.Intents.all()
