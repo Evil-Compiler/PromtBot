@@ -2,6 +2,8 @@
 This Discord bot allows users to submit text messages, which are stored and can be retrieved at random. 
 Users can also delete their submissions, and administrators can delete any submission or manage roles that can perform deletion.
 
+>sorry but the documentation is not up to date
+
 # Prerequisites
 Python 3 installed on your system. 
 >(Tested on `python 3.12.3`)
@@ -55,7 +57,7 @@ There are 2 Options
 ### Running the Script in the Background
 To ensure the script runs in the background and continues running even if you close the terminal, you can use nohup or screen.
 
-#### Using nohup:
+#### (not tested) Using nohup:
 
 `nohup ./run_bot.sh &`
 
