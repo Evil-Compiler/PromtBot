@@ -3,6 +3,7 @@
 config.txt
 submissions.txt
 *.key
+update_libraries.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

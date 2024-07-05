@@ -87,6 +87,6 @@ class TextSubmission:
         submissions = [s for s in self.submissions if category is None or s[1] == category]
         if submissions:
             separator = "\n----------------------\n"
-            return separator.join(submission[2] for submission in submissions)
+            return '\n'.join(f"Category: {submission[1]} - Text: {submission[2]} {separator}" for submission in submissions)
         else:
             return "No submissions available."  
